@@ -1,7 +1,7 @@
-const Piece = require("./piece");
-const Point = require("./point");
+import Piece from "./piece.js";
+import Point from "./point.js";
 
-class Cube extends Piece {
+export default class Cube extends Piece {
   constructor(size) {
     const points = []
     for (let i = 0; i < size; i++) {
@@ -20,5 +20,3 @@ class Cube extends Piece {
     return true;
   }
 }
-
-module.exports = Cube;

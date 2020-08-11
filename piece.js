@@ -1,8 +1,9 @@
-const Point = require("./point")
+import Point from "./point.js"
+import * as THREE from "./libs/three.module.js"
 
-class Piece {
-  constructor(points, name = "") {
-    this.name = name || "";
+export default class Piece {
+  constructor(points, graphicColor) {
+    this.graphicColor = graphicColor;
     this.points = points !== null ? points : [];
     this.size = this.points.length;
   }
@@ -21,8 +22,8 @@ class Piece {
   }
   clone() {
     const clonePoints = []
-    this.points.forEach(point => clonePoints.push(new Point(point.x, point.y, point.z)))
-    return new Piece(clonePoints, this.name)
+    this.points.forEach(point => clonePoints.push(new Point(point.x, point.y, point.z, point.graphicColor)))
+    return new Piece(clonePoints, this.graphicColor)
   }
   moveTo(point) {
     const delta_x = point.x - this.points[0].x;
@@ -61,5 +62,11 @@ class Piece {
       point.y = (x - x0) + y0
     })
   }
+  toThree(graphicColor) {
+    const group = new THREE.group()
+    this.points.forEach(point => {
+      group.push(point.toThree(this.graphicColor))
+    })
+    return group
+  }
 }
-module.exports = Piece;

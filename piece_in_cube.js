@@ -1,4 +1,4 @@
-class PieceInCube {
+export default class PieceInCube {
   constructor(piece, cube) {
     this.pieces = new SetPiece();
     for (const point of cube.points) {
@@ -36,4 +36,3 @@ class SetPiece {
     if (!this.isExist(piece)) this.items.push(piece.clone());
   }
 }
-module.exports = PieceInCube;

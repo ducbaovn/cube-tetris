@@ -1,6 +1,6 @@
-const Piece = require("./piece");
+import Piece from "./piece.js";
 
-class MergePiece {
+export default class MergePiece {
   constructor() {
     this.pieces = [];
   }
@@ -35,4 +35,3 @@ class MergePiece {
     return new Piece(points);
   }
 }
-module.exports = MergePiece;

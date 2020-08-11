@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - interactive - voxel painter</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+		<style>
+			body {
+				background-color: #f0f0f0;
+				color: #444;
+			}
+			a {
+				color: #08f;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="info">
+      <label for="fname">Cube Size:</label>
+      <select id="cubeSize">
+        <option value=3>3</option>
+        <option value=4>4</option>
+        <option value=5>5</option>
+        <option value=6>6</option>
+      </select><br>
+      <button type="button" id="submitSize">Next</button>
+    </div>
+    <div id="input">
+      <select id="index">
+          <option>Piece 1</option>
+      </select>
+      <button type="button" id="submit">Submit</button><br>
+      <button type="button" id="finish">Finish</button><br>
+    </div>
+		<script type="module">
+
+			import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r119/build/three.module.js';
+      import Point from './point.js';
+      import Piece from './piece.js';
+      import CubeTetris from './cube_tetris.js';
+
+			var camera, scene, renderer;
+			var plane;
+			var mouse, raycaster, isShiftDown = false;
+
+			var rollOverMesh, rollOverMaterial;
+
+      var pieces = [];
+      var pieceColor = Math.random() * 0xffffff;
+      var objects = [];
+      const indexSelect = document.getElementById("index");
+      const cubeSizeSelect = document.getElementById("cubeSize");
+      const inputBtn = document.getElementById("input");
+      const submitSizeBtn = document.getElementById("submitSize");
+      const infoDiv = document.getElementById("info");
+      const inputDiv = document.getElementById("input");
+      const submitBtn = document.getElementById("submit");
+      const finishBtn = document.getElementById("finish");
+      var currentIndex = indexSelect.selectedIndex;
+      const cubeSize = parseInt(cubeSizeSelect.value);
+
+      inputDiv.style.display = 'none';
+      submitSizeBtn.addEventListener("mousedown", function(e) {
+        infoDiv.style.display = 'none';
+        inputDiv.style.display = 'block';
+        init();
+        render();
+      });
+      indexSelect.addEventListener("change", function() {
+        const voxels = objects.splice(1)
+        voxels.forEach(voxel => {
+          scene.remove(voxel);
+        })
+        currentIndex = indexSelect.selectedIndex;
+        const piece = pieces[currentIndex];
+        if (piece != null) {
+          pieceColor = piece.graphicColor;
+          piece.points.forEach(point => {
+            const voxel = point.toThree(pieces[currentIndex].graphicColor);
+            scene.add(voxel);
+            objects.push(voxel);
+          })
+          render();
+        }
+      });
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera.position.set( 500, 800, 1300 );
+				camera.lookAt( 0, 0, 0 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xf0f0f0 );
+
+				// roll-over helpers
+
+				var rollOverGeo = new THREE.BoxBufferGeometry( 50, 50, 50 );
+				rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
+				rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
+				scene.add( rollOverMesh );
+
+				// cubes
+
+				// grid
+
+				var gridHelper = new THREE.GridHelper( 1000, 20 );
+				scene.add( gridHelper );
+
+				//
+
+				raycaster = new THREE.Raycaster();
+				mouse = new THREE.Vector2();
+
+				var geometry = new THREE.PlaneBufferGeometry( 1000, 1000 );
+				geometry.rotateX( - Math.PI / 2 );
+
+				plane = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { visible: false } ) );
+				scene.add( plane );
+
+				objects.push( plane );
+
+				// lights
+
+				var ambientLight = new THREE.AmbientLight( 0x606060 );
+				scene.add( ambientLight );
+
+				var directionalLight = new THREE.DirectionalLight( 0xffffff );
+				directionalLight.position.set( 1, 0.75, 0.5 ).normalize();
+				scene.add( directionalLight );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				document.addEventListener( 'keydown', onDocumentKeyDown, false );
+				document.addEventListener( 'keyup', onDocumentKeyUp, false );
+        submitBtn.addEventListener("mousedown", onAddMouseDown, false);
+        finishBtn.addEventListener("mousedown", onFinishMouseDown, false);
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function onDocumentMouseMove( event ) {
+
+				event.preventDefault();
+
+				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+
+				raycaster.setFromCamera( mouse, camera );
+
+				var intersects = raycaster.intersectObjects( objects );
+
+				if ( intersects.length > 0 ) {
+
+					var intersect = intersects[ 0 ];
+
+					rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
+					rollOverMesh.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
+          console.log((rollOverMesh.position.x - 25)/50, (rollOverMesh.position.y - 25)/50, (rollOverMesh.position.z - 25)/50);
+
+				}
+
+				render();
+
+			}
+
+			function onDocumentMouseDown( event ) {
+
+				event.preventDefault();
+
+				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+
+				raycaster.setFromCamera( mouse, camera );
+
+				var intersects = raycaster.intersectObjects( objects );
+
+				if ( intersects.length > 0 ) {
+
+					var intersect = intersects[ 0 ];
+
+					// delete cube
+
+					if ( isShiftDown ) {
+
+						if ( intersect.object !== plane ) {
+
+							scene.remove( intersect.object );
+
+							objects.splice( objects.indexOf( intersect.object ), 1 );
+
+						}
+
+						// create cube
+
+					} else {
+            var cubeGeo = new THREE.BoxBufferGeometry( 50, 50, 50 );
+				    var cubeMaterial = new THREE.MeshLambertMaterial( { color: pieceColor, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
+						var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
+						voxel.position.copy( intersect.point ).add( intersect.face.normal );
+						voxel.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
+						scene.add( voxel );
+
+            objects.push( voxel );
+					}
+
+					render();
+
+				}
+
+			}
+
+			function onDocumentKeyDown( event ) {
+
+				switch ( event.keyCode ) {
+
+					case 16: isShiftDown = true; break;
+
+				}
+
+			}
+
+			function onDocumentKeyUp( event ) {
+
+				switch ( event.keyCode ) {
+
+					case 16: isShiftDown = false; break;
+
+				}
+
+			}
+
+      function onAddMouseDown(event) {
+        const voxels = objects.splice(1)
+        const points = []
+        voxels.forEach(voxel => {
+          scene.remove(voxel);
+          points.push(Point.fromThree(voxel));
+        })
+        const isUpdate = pieces[currentIndex] != null
+        pieces[currentIndex] = new Piece(points, pieceColor);
+        if (!isUpdate) {
+          const option = document.createElement("OPTION");
+          option.text = "Piece " + (currentIndex + 2);
+          indexSelect.options.add(option)
+          pieceColor = Math.random() * 0xffffff;
+          currentIndex++;
+          indexSelect.selectedIndex = currentIndex;
+        }
+        render();
+      }
+
+      function onFinishMouseDown(event) {
+        const p1 = new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(2,0,0),
+          new Point(0,1,0),
+          new Point(0,2,0),
+          new Point(0,1,1),
+        ], Math.random() * 0xffffff)
+        const p2 = new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(2,0,0),
+          new Point(0,0,1),
+          new Point(0,0,2),
+          new Point(2,0,1),
+        ], Math.random() * 0xffffff)
+        const p3 = new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(2,0,0),
+          new Point(1,1,0),
+          new Point(1,2,0),
+          new Point(2,2,0),
+          new Point(0,0,1),
+          new Point(2,0,1),
+        ], Math.random() * 0xffffff)
+        const p4 = new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(2,0,0),
+          new Point(0,0,1),
+          new Point(2,1,0),
+        ], Math.random() * 0xffffff)
+        const p5 = new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(0,1,0),
+          new Point(0,1,1),
+          new Point(1,1,1),
+          new Point(0,2,1),
+        ], Math.random() * 0xffffff)
+        const p6 = new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(2,0,0),
+          new Point(0,1,0),
+          new Point(0,2,0),
+          new Point(2,0,1),
+          new Point(2,1,1),
+        ], Math.random() * 0xffffff)
+        const p7 = new Piece([
+          new Point(0,0,0),
+          new Point(0,1,0),
+          new Point(0,2,0),
+          new Point(0,0,1),
+          new Point(1,0,1),
+        ], Math.random() * 0xffffff)
+        const p8 = new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(1,0,1),
+          new Point(1,1,0),
+          new Point(2,1,0),
+          new Point(1,2,0),
+          new Point(1,2,1),
+        ], Math.random() * 0xffffff)
+        const p9 = new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(0,1,0),
+          new Point(0,2,0),
+          new Point(1,2,0),
+          new Point(2,2,0),
+          new Point(2,3,0),
+          new Point(0,0,1),
+        ], Math.random() * 0xffffff)
+        const p10 = new Piece([
+          new Point(0,0,0),
+          new Point(0,1,0),
+          new Point(1,0,0),
+          new Point(0,-1,0),
+          new Point(-1,0,0),
+          new Point(0,0,1),
+        ], Math.random() * 0xffffff)
+        const cubeTetris = new CubeTetris(cubeSize, [p1,p2,p3,p4,p5,p6,p7,p8,p9,p10]);
+        cubeTetris.solve()
+        if (cubeTetris.solution.pieces.length === 0) {
+          alert("No Solution")
+        } else {
+          cubeTetris.solution.pieces.forEach(piece => {
+            scene.add(piece.toThree())
+          })
+          render();
+        }
+      }
+
+			function render() {
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+	</body>
+</html>
