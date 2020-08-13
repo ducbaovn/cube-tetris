@@ -1,4 +1,4 @@
-import * as THREE from './libs/three.module.js'
+import * as THREE from '../libs/three.module.js'
 export default class Point {
   constructor(x, y, z) {
     this.x = x;
@@ -10,7 +10,7 @@ export default class Point {
   }
   toThree(graphicColor) {
     const cubeGeo = new THREE.BoxBufferGeometry( 50, 50, 50 );
-    const cubeMaterial = new THREE.MeshLambertMaterial( { color: graphicColor, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
+    const cubeMaterial = new THREE.MeshLambertMaterial( { color: graphicColor, map: new THREE.TextureLoader().load( './images/square-outline-textured.png' ) } );
     const graphic = new THREE.Mesh( cubeGeo, cubeMaterial );
     graphic.position.set(this.x, this.y, this.z).multiplyScalar(50).addScalar(25);
     return graphic

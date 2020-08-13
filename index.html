@@ -17,7 +17,7 @@
 	</head>
 	<body>
 		<div id="info">
-      <label for="fname">Cube Size:</label>
+      <label for="cubeSize">Cube Size:</label>
       <select id="cubeSize">
         <option value=3>3</option>
         <option value=4>4</option>
@@ -31,14 +31,21 @@
           <option>Piece 1</option>
       </select>
       <button type="button" id="submit">Submit</button><br>
-      <button type="button" id="finish">Finish</button><br>
+      <strong>click</strong>: add point, <strong>shift + click</strong>: remove point<br>
+      <button type="button" id="finish">Solve</button><br>
+    </div>
+    <div id="loading">
+      <img src="images/loading-343-460469.png" style="width:30px;height:30px;">
+    </div>
+    <div id="solution">
+      <button type="button" id="back" style="margin-right: 50pt;">Back</button><button type="button" id="next">Next</button><br>
     </div>
 		<script type="module">
 
-			import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r119/build/three.module.js';
-      import Point from './point.js';
-      import Piece from './piece.js';
-      import CubeTetris from './cube_tetris.js';
+			import * as THREE from './libs/three.module.js';
+      import Point from './components/point.js';
+      import Piece from './components/piece.js';
+      import CubeTetris from './components/cube_tetris.js';
 
 			var camera, scene, renderer;
 			var plane;
@@ -55,15 +62,22 @@
       const submitSizeBtn = document.getElementById("submitSize");
       const infoDiv = document.getElementById("info");
       const inputDiv = document.getElementById("input");
+      const loadingDiv = document.getElementById("loading");
+      const solutionDiv = document.getElementById("solution");
       const submitBtn = document.getElementById("submit");
       const finishBtn = document.getElementById("finish");
+      const backBtn = document.getElementById("back");
+      const nextBtn = document.getElementById("next");
       var currentIndex = indexSelect.selectedIndex;
-      const cubeSize = parseInt(cubeSizeSelect.value);
+      var cubeSize = parseInt(cubeSizeSelect.value);
 
       inputDiv.style.display = 'none';
+      loadingDiv.style.display = 'none';
+      solutionDiv.style.display = 'none';
       submitSizeBtn.addEventListener("mousedown", function(e) {
         infoDiv.style.display = 'none';
         inputDiv.style.display = 'block';
+        cubeSize = parseInt(cubeSizeSelect.value);
         init();
         render();
       });
@@ -82,6 +96,8 @@
             objects.push(voxel);
           })
           render();
+        } else {
+          pieceColor = Math.random() * 0xffffff;
         }
       });
 			function init() {
@@ -210,12 +226,11 @@
 
 					} else {
             var cubeGeo = new THREE.BoxBufferGeometry( 50, 50, 50 );
-				    var cubeMaterial = new THREE.MeshLambertMaterial( { color: pieceColor, map: new THREE.TextureLoader().load( 'square-outline-textured.png' ) } );
+				    var cubeMaterial = new THREE.MeshLambertMaterial( { color: pieceColor, map: new THREE.TextureLoader().load( './images/square-outline-textured.png' ) } );
 						var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
 						voxel.position.copy( intersect.point ).add( intersect.face.normal );
 						voxel.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
-						scene.add( voxel );
-
+            scene.add( voxel );
             objects.push( voxel );
 					}
 
@@ -259,107 +274,41 @@
           option.text = "Piece " + (currentIndex + 2);
           indexSelect.options.add(option)
           pieceColor = Math.random() * 0xffffff;
-          currentIndex++;
-          indexSelect.selectedIndex = currentIndex;
+          indexSelect.selectedIndex = ++currentIndex;
         }
         render();
       }
 
       function onFinishMouseDown(event) {
-        const p1 = new Piece([
-          new Point(0,0,0),
-          new Point(1,0,0),
-          new Point(2,0,0),
-          new Point(0,1,0),
-          new Point(0,2,0),
-          new Point(0,1,1),
-        ], Math.random() * 0xffffff)
-        const p2 = new Piece([
-          new Point(0,0,0),
-          new Point(1,0,0),
-          new Point(2,0,0),
-          new Point(0,0,1),
-          new Point(0,0,2),
-          new Point(2,0,1),
-        ], Math.random() * 0xffffff)
-        const p3 = new Piece([
-          new Point(0,0,0),
-          new Point(1,0,0),
-          new Point(2,0,0),
-          new Point(1,1,0),
-          new Point(1,2,0),
-          new Point(2,2,0),
-          new Point(0,0,1),
-          new Point(2,0,1),
-        ], Math.random() * 0xffffff)
-        const p4 = new Piece([
-          new Point(0,0,0),
-          new Point(1,0,0),
-          new Point(2,0,0),
-          new Point(0,0,1),
-          new Point(2,1,0),
-        ], Math.random() * 0xffffff)
-        const p5 = new Piece([
-          new Point(0,0,0),
-          new Point(1,0,0),
-          new Point(0,1,0),
-          new Point(0,1,1),
-          new Point(1,1,1),
-          new Point(0,2,1),
-        ], Math.random() * 0xffffff)
-        const p6 = new Piece([
-          new Point(0,0,0),
-          new Point(1,0,0),
-          new Point(2,0,0),
-          new Point(0,1,0),
-          new Point(0,2,0),
-          new Point(2,0,1),
-          new Point(2,1,1),
-        ], Math.random() * 0xffffff)
-        const p7 = new Piece([
-          new Point(0,0,0),
-          new Point(0,1,0),
-          new Point(0,2,0),
-          new Point(0,0,1),
-          new Point(1,0,1),
-        ], Math.random() * 0xffffff)
-        const p8 = new Piece([
-          new Point(0,0,0),
-          new Point(1,0,0),
-          new Point(1,0,1),
-          new Point(1,1,0),
-          new Point(2,1,0),
-          new Point(1,2,0),
-          new Point(1,2,1),
-        ], Math.random() * 0xffffff)
-        const p9 = new Piece([
-          new Point(0,0,0),
-          new Point(1,0,0),
-          new Point(0,1,0),
-          new Point(0,2,0),
-          new Point(1,2,0),
-          new Point(2,2,0),
-          new Point(2,3,0),
-          new Point(0,0,1),
-        ], Math.random() * 0xffffff)
-        const p10 = new Piece([
-          new Point(0,0,0),
-          new Point(0,1,0),
-          new Point(1,0,0),
-          new Point(0,-1,0),
-          new Point(-1,0,0),
-          new Point(0,0,1),
-        ], Math.random() * 0xffffff)
-        const cubeTetris = new CubeTetris(cubeSize, [p1,p2,p3,p4,p5,p6,p7,p8,p9,p10]);
-        cubeTetris.solve()
-        if (cubeTetris.solution.pieces.length === 0) {
-          alert("No Solution")
-        } else {
-          cubeTetris.solution.pieces.forEach(piece => {
-            scene.add(piece.toThree())
-          })
-          render();
-        }
+        inputDiv.style.display = 'none'
+        loadingDiv.style.display = 'block'
+        setTimeout(() => {
+          const cubeTetris = new CubeTetris(cubeSize, pieces);
+          cubeTetris.solve()
+          loadingDiv.style.display = 'none'
+          if (cubeTetris.solution.pieces.length === 0) {
+            inputDiv.style.display = 'block';
+            alert("No Solution")
+          } else {
+            solutionDiv.style.display = 'block';
+            currentIndex = 0;
+            const items = cubeTetris.solution.pieces.map(piece => piece.toThree())
+            backBtn.addEventListener("mousedown", () => {
+              if (currentIndex > 0) {
+                scene.remove(items[currentIndex--]);
+                render();
+              }
+            }, false);
+            nextBtn.addEventListener("mousedown", () => {
+              if (currentIndex < cubeTetris.solution.pieces.length - 1) {
+                scene.add(items[++currentIndex])
+                render();
+              }
+            }, false);
+            scene.add(items[currentIndex])
+            render();
+          }
+        }, 0)
       }
 
 			function render() {

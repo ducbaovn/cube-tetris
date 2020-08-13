@@ -20,10 +20,10 @@ export default class MergePiece {
   }
   add(piece) {
     if (!this.canMerge(piece)) throw Error("Cannot merge")
-    this.pieces.push(piece)
+    this.pieces.push(piece);
   }
   remove() {
-    this.pieces.pop()
+    this.pieces.pop();
   }
   merge() {
     const points = [];

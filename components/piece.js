@@ -1,8 +1,8 @@
 import Point from "./point.js"
-import * as THREE from "./libs/three.module.js"
+import * as THREE from "../libs/three.module.js"
 
 export default class Piece {
-  constructor(points, graphicColor) {
+  constructor(points, graphicColor = Math.random() * 0xffffff) {
     this.graphicColor = graphicColor;
     this.points = points !== null ? points : [];
     this.size = this.points.length;
@@ -63,9 +63,9 @@ export default class Piece {
     })
   }
   toThree(graphicColor) {
-    const group = new THREE.group()
+    const group = new THREE.Group()
     this.points.forEach(point => {
-      group.push(point.toThree(this.graphicColor))
+      group.add(point.toThree(this.graphicColor))
     })
     return group
   }

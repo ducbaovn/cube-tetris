@@ -1,18 +1,19 @@
 export default class PieceInCube {
   constructor(piece, cube) {
     this.pieces = new SetPiece();
+    const clone = piece.clone()
     for (const point of cube.points) {
-      piece.moveTo(point);
-      if (cube.isContainsPiece(piece)) this.pieces.add(piece)
+      clone.moveTo(point);
+      if (cube.isContainsPiece(clone)) this.pieces.add(clone)
       for (let i = 0; i < 4; i++) {
-        piece.rotateX();
-        if (cube.isContainsPiece(piece)) this.pieces.add(piece)
+        clone.rotateX();
+        if (cube.isContainsPiece(clone)) this.pieces.add(clone)
         for (let j = 0; j < 4; j++) {
-          piece.rotateY();
-          if (cube.isContainsPiece(piece)) this.pieces.add(piece)
+          clone.rotateY();
+          if (cube.isContainsPiece(clone)) this.pieces.add(clone)
           for (let z = 0; z < 4; z++) {
-            piece.rotateZ();
-            if (cube.isContainsPiece(piece)) this.pieces.add(piece)
+            clone.rotateZ();
+            if (cube.isContainsPiece(clone)) this.pieces.add(clone)
           }
         }
       }

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - interactive - voxel painter</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+		<style>
+			body {
+				background-color: #f0f0f0;
+				color: #444;
+			}
+			a {
+				color: #08f;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="info">
+      <select id="index">
+        <option>Piece 1</option>
+        <option>Piece 2</option>
+        <option>Piece 3</option>
+        <option>Piece 4</option>
+        <option>Piece 5</option>
+        <option>Piece 6</option>
+        <option>Piece 7</option>
+        <option>Piece 8</option>
+        <option>Piece 9</option>
+        <option>Piece 10</option>
+      </select><br>
+      <button type="button" id="solve">Solve</button>
+    </div>
+    <div id="loading">
+      <img src="images/loading-343-460469.png" style="width:30px;height:30px;">
+    </div>
+    <div id="solution">
+      <button type="button" id="back" style="margin-right: 50pt;">Back</button><button type="button" id="next">Next</button><br>
+    </div>
+		<script type="module">
+
+			import * as THREE from './libs/three.module.js';
+      import Point from './components/point.js';
+      import Piece from './components/piece.js';
+      import CubeTetris from './components/cube_tetris.js';
+
+			var camera, scene, renderer;
+			var plane;
+
+      var pieces = [
+        new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(2,0,0),
+          new Point(0,1,0),
+          new Point(0,2,0),
+          new Point(0,1,1),
+        ]),
+        new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(2,0,0),
+          new Point(0,0,1),
+          new Point(0,0,2),
+          new Point(2,0,1),
+        ]),
+        new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(2,0,0),
+          new Point(1,1,0),
+          new Point(1,2,0),
+          new Point(2,2,0),
+          new Point(0,0,1),
+          new Point(2,0,1),
+        ]),
+        new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(2,0,0),
+          new Point(0,0,1),
+          new Point(2,1,0),
+        ]),
+        new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(0,1,0),
+          new Point(0,1,1),
+          new Point(1,1,1),
+          new Point(0,2,1),
+        ]),
+        new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(2,0,0),
+          new Point(0,1,0),
+          new Point(0,2,0),
+          new Point(2,0,1),
+          new Point(2,1,1),
+        ]),
+        new Piece([
+          new Point(0,0,0),
+          new Point(0,1,0),
+          new Point(0,2,0),
+          new Point(0,0,1),
+          new Point(1,0,1),
+        ]),
+        new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(1,0,1),
+          new Point(1,1,0),
+          new Point(2,1,0),
+          new Point(1,2,0),
+          new Point(1,2,1),
+        ]),
+        new Piece([
+          new Point(0,0,0),
+          new Point(1,0,0),
+          new Point(0,1,0),
+          new Point(0,2,0),
+          new Point(1,2,0),
+          new Point(2,2,0),
+          new Point(2,3,0),
+          new Point(0,0,1),
+        ]),
+        new Piece([
+          new Point(0,0,0),
+          new Point(0,1,0),
+          new Point(1,0,0),
+          new Point(0,-1,0),
+          new Point(-1,0,0),
+          new Point(0,0,1),
+        ]),
+      ];
+
+      const infoDiv = document.getElementById("info");
+      const indexSelect = document.getElementById("index");
+      const solveBtn = document.getElementById("solve");
+      const loadingDiv = document.getElementById("loading");
+      const solutionDiv = document.getElementById("solution");
+      const backBtn = document.getElementById("back");
+      const nextBtn = document.getElementById("next");
+      var currentIndex = indexSelect.selectedIndex;
+      indexSelect.addEventListener("change", onIndexSelectChange, false);
+
+      loadingDiv.style.display = 'none';
+      solutionDiv.style.display = 'none';
+      solveBtn.addEventListener("mousedown", onSolveMouseDown, false);
+      init()
+      render()
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera.position.set( 500, 800, 1300 );
+				camera.lookAt( 0, 0, 0 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xf0f0f0 );
+
+				// grid
+
+				var gridHelper = new THREE.GridHelper( 1000, 20 );
+				scene.add( gridHelper );
+
+				var geometry = new THREE.PlaneBufferGeometry( 1000, 1000 );
+				geometry.rotateX( - Math.PI / 2 );
+
+				plane = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { visible: false } ) );
+				scene.add( plane );
+
+				// lights
+
+				var ambientLight = new THREE.AmbientLight( 0x606060 );
+				scene.add( ambientLight );
+
+				var directionalLight = new THREE.DirectionalLight( 0xffffff );
+				directionalLight.position.set( 1, 0.75, 0.5 ).normalize();
+        scene.add( directionalLight );
+        
+        currentIndex = indexSelect.selectedIndex;
+        scene.add(pieces[currentIndex].toThree())
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+        document.body.appendChild( renderer.domElement );
+        document.addEventListener( 'mousemove', (event) => { render() }, false );
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+      }
+
+      function resetScene() {
+        scene.children.splice(4)
+      }
+
+      function onIndexSelectChange(event) {
+        resetScene();
+        currentIndex = indexSelect.selectedIndex;
+        scene.add(pieces[currentIndex].toThree())
+
+        render();
+      }
+
+      function onSolveMouseDown(event) {
+        infoDiv.style.display = 'none'
+        loadingDiv.style.display = 'block'
+        setTimeout(() => {
+          const cubeTetris = new CubeTetris(4, pieces);
+          cubeTetris.solve()
+          loadingDiv.style.display = 'none'
+          if (cubeTetris.solution.pieces.length === 0) {
+            infoDiv.style.display = 'block'
+            alert("No Solution")
+          } else {
+            solutionDiv.style.display = 'block';
+            currentIndex = 0;
+            const items = cubeTetris.solution.pieces.map(piece => piece.toThree())
+            backBtn.addEventListener("mousedown", () => {
+              if (currentIndex > 0) {
+                scene.remove(items[currentIndex--])
+                render();
+              }
+            }, false);
+            nextBtn.addEventListener("mousedown", () => {
+              if (currentIndex < cubeTetris.solution.pieces.length - 1) {
+                scene.add(items[++currentIndex])
+                render();
+              }
+            }, false);
+            resetScene();
+            scene.add(items[currentIndex])
+            render();
+          }
+        }, 0)
+      }
+
+			function render() {
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+	</body>
+</html>
