@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - interactive - voxel painter</title>
+		<title>Cube Tetris - ducbaovn</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
@@ -282,9 +282,9 @@
       function onFinishMouseDown(event) {
         inputDiv.style.display = 'none'
         loadingDiv.style.display = 'block'
-        setTimeout(() => {
+        setTimeout(async () => {
           const cubeTetris = new CubeTetris(cubeSize, pieces);
-          cubeTetris.solve()
+          await cubeTetris.solve()
           loadingDiv.style.display = 'none'
           if (cubeTetris.solution.pieces.length === 0) {
             inputDiv.style.display = 'block';

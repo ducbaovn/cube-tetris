@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - interactive - voxel painter</title>
+		<title>Cube Tetris - ducbaovn</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
@@ -29,6 +29,7 @@
         <option>Piece 9</option>
         <option>Piece 10</option>
       </select><br>
+      <input type="checkbox" id="animation"><label for="animation">Animation</label>
       <button type="button" id="solve">Solve</button>
     </div>
     <div id="loading">
@@ -136,6 +137,7 @@
 
       const infoDiv = document.getElementById("info");
       const indexSelect = document.getElementById("index");
+      const animationCheckbox = document.getElementById("animation");
       const solveBtn = document.getElementById("solve");
       const loadingDiv = document.getElementById("loading");
       const solutionDiv = document.getElementById("solution");
@@ -216,9 +218,9 @@
       function onSolveMouseDown(event) {
         infoDiv.style.display = 'none'
         loadingDiv.style.display = 'block'
-        setTimeout(() => {
-          const cubeTetris = new CubeTetris(4, pieces);
-          cubeTetris.solve()
+        setTimeout(async () => {
+          const cubeTetris = animationCheckbox.checked ? new CubeTetris(4, pieces, camera, scene, renderer) : new CubeTetris(4, pieces);
+          await cubeTetris.solve()
           loadingDiv.style.display = 'none'
           if (cubeTetris.solution.pieces.length === 0) {
             infoDiv.style.display = 'block'
