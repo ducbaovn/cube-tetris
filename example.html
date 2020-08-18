@@ -218,6 +218,7 @@
       function onSolveMouseDown(event) {
         infoDiv.style.display = 'none'
         loadingDiv.style.display = 'block'
+        resetScene();
         setTimeout(async () => {
           const cubeTetris = animationCheckbox.checked ? new CubeTetris(4, pieces, camera, scene, renderer) : new CubeTetris(4, pieces);
           await cubeTetris.solve()
@@ -241,7 +242,6 @@
                 render();
               }
             }, false);
-            resetScene();
             scene.add(items[currentIndex])
             render();
           }
